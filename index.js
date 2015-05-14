@@ -11,14 +11,9 @@ server.use(restify.acceptParser(server.acceptable));
 server.use(restify.queryParser());
 server.use(restify.bodyParser());
 
-var rets = new RETS({
-    url: 'http://xxxxxxxxxx@sef.rets.interealty.com/Login.asmx/Login',
-    ua: {
-        name: 'xxxxxxx',
-        pass: 'xxxxxxx'
-    },
-    version: 'RETS/1.7.2'
-});
+var config = require('./config.json');
+
+var rets = new RETS(config);
 
 server.get('/rets/properties', function (req, res) {
     var params = {
@@ -35,14 +30,13 @@ server.get('/rets/properties', function (req, res) {
     
     debug("Search params: \n%s", util.inspect(params, {colors: true}));
 
-    rets
-    .on('search', function(err, search){
-    	rets.removeAllListeners('search');
-    	debug('search complete');
-    	res.send(200, properties);
-    }).search(params)
+    rets.search(params)
     .on('data', function(listing){
-    	properties.push(listing);
+        properties.push(listing);
+    })
+    .on('end', function(){
+    	debug('search complete');
+    	res.send(200, properties);        
     });
 });
 
